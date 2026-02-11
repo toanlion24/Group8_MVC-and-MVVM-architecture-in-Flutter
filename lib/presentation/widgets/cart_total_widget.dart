@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/mixins/price_formatter_mixin.dart';
-import '../providers/cart_provider.dart';
+import '../providers/cart_notifier.dart';
 
 // CartTotalWidget - Sử dụng SELECTOR để tối ưu rebuild
 //
@@ -25,13 +25,15 @@ class CartTotalWidget extends StatelessWidget with PriceFormatterMixin {
 
   @override
   Widget build(BuildContext context) {
-    // SELECTOR: Chỉ lắng nghe totalPrice, không quan tâm các state khác
-    return Selector<CartProvider, double>(
-      // selector: Chọn phần state cần lắng nghe
-      selector: (context, provider) => provider.totalPrice,
+    // SELECTOR OLD -> RIVERPOD SELECT
+    // Sử dụng Consumer của Riverpod
+    return Consumer(
+      builder: (context, ref, child) {
+        // Chỉ lắng nghe totalPrice
+        final totalPrice = ref.watch(
+          cartProvider.select((state) => state.totalPrice),
+        );
 
-      // builder: Chỉ được gọi khi totalPrice thay đổi
-      builder: (context, totalPrice, child) {
         debugPrint('CartTotalWidget REBUILD - totalPrice: $totalPrice');
 
         return Container(
@@ -41,7 +43,7 @@ class CartTotalWidget extends StatelessWidget with PriceFormatterMixin {
             borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
+                color: Colors.black.withAlpha(25), // ~0.1 opacity
                 blurRadius: 8,
                 offset: const Offset(0, -2),
               ),
@@ -60,9 +62,8 @@ class CartTotalWidget extends StatelessWidget with PriceFormatterMixin {
                       'Tổng tiền',
                       style: TextStyle(
                         fontSize: 14,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onPrimaryContainer.withValues(alpha: 0.7),
+                        color: Theme.of(context).colorScheme.onPrimaryContainer
+                            .withAlpha(179), // ~0.7 opacity
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -89,11 +90,8 @@ class CartTotalWidget extends StatelessWidget with PriceFormatterMixin {
                             ),
                           );
                           // Clear cart after checkout
-                          // Provider.of với listen: false - Chỉ gọi method, không rebuild
-                          Provider.of<CartProvider>(
-                            context,
-                            listen: false,
-                          ).clearCart();
+                          // ref.read(provider.notifier) để gọi method
+                          ref.read(cartProvider.notifier).clearCart();
                         }
                       : null,
                   icon: const Icon(Icons.payment),

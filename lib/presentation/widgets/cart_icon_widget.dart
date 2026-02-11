@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../providers/cart_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/cart_notifier.dart';
 
 // CartIconWidget - Sử dụng CONSUMER để hiển thị số lượng
 //
@@ -20,12 +20,15 @@ class CartIconWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // CONSUMER: Lắng nghe CartProvider và rebuild khi có thay đổi
-    return Consumer<CartProvider>(
-      // builder được gọi lại mỗi khi CartProvider gọi notifyListeners()
-      builder: (context, cartProvider, child) {
-        debugPrint(
-          'CartIconWidget REBUILD - totalQuantity: ${cartProvider.totalQuantity}',
+    // Sử dụng Consumer của Riverpod
+    return Consumer(
+      builder: (context, ref, child) {
+        // Sử dụng ref.watch với select để chỉ lắng nghe totalQuantity (giống Selector)
+        final totalQuantity = ref.watch(
+          cartProvider.select((state) => state.totalQuantity),
         );
+
+        debugPrint('CartIconWidget REBUILD - totalQuantity: $totalQuantity');
 
         return GestureDetector(
           onTap: onTap,
@@ -38,7 +41,7 @@ class CartIconWidget extends StatelessWidget {
                 const Icon(Icons.shopping_cart_outlined, size: 28),
 
                 // Badge hiển thị số lượng
-                if (cartProvider.totalQuantity > 0)
+                if (totalQuantity > 0)
                   Positioned(
                     right: -8,
                     top: -8,
@@ -53,9 +56,7 @@ class CartIconWidget extends StatelessWidget {
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
-                        cartProvider.totalQuantity > 99
-                            ? '99+'
-                            : '${cartProvider.totalQuantity}',
+                        totalQuantity > 99 ? '99+' : '$totalQuantity',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 11,

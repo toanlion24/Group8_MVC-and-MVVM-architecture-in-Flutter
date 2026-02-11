@@ -6,23 +6,19 @@ import '../../data/models/product_model.dart';
 // Chứa business logic liên quan đến item trong giỏ
 class CartItem {
   final ProductModel product;
-  int quantity;
+  final int quantity;
 
-  CartItem({required this.product, this.quantity = 1});
+  const CartItem({required this.product, this.quantity = 1});
 
   // Tính tổng tiền của item này
   double get totalPrice => product.price * quantity;
 
-  // Tăng số lượng
-  void increment() {
-    quantity++;
-  }
-
-  // Giảm số lượng
-  void decrement() {
-    if (quantity > 1) {
-      quantity--;
-    }
+  // Tạo bản sao mới với các giá trị thay đổi (Immutability)
+  CartItem copyWith({ProductModel? product, int? quantity}) {
+    return CartItem(
+      product: product ?? this.product,
+      quantity: quantity ?? this.quantity,
+    );
   }
 
   // ============================================

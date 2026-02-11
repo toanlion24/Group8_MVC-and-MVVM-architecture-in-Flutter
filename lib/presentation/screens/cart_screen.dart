@@ -1,21 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../providers/cart_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/services/cart_service.dart';
+import '../providers/cart_notifier.dart';
 import '../widgets/cart_item_widget.dart';
 import '../widgets/cart_total_widget.dart';
 
 // CartScreen - Màn hình giỏ hàng
-//
-// DEMO CÁC CÁCH SỬ DỤNG PROVIDER:
-//
-// 1. Consumer: Được sử dụng trong CartIconWidget (AppBar)
-//    - Rebuild toàn bộ khi giỏ hàng thay đổi
-//
-// 2. Selector: Được sử dụng trong CartTotalWidget (Footer)
-//    - Chỉ rebuild khi totalPrice thay đổi
-//
-// 3. context.watch(): Lắng nghe và rebuild
-// 4. context.read(): Chỉ đọc, không rebuild
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
 
@@ -23,9 +13,19 @@ class CartScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Header hiển thị số loại sản phẩm
-        Consumer<CartProvider>(
-          builder: (context, cartProvider, child) {
+        // Header hiển thị số loại sản phẩm (Sử dụng Consumer)
+        Consumer(
+          builder: (context, ref, child) {
+            final itemCount = ref.watch(
+              cartProvider.select((state) => state.itemCount),
+            );
+            final totalQuantity = ref.watch(
+              cartProvider.select((state) => state.totalQuantity),
+            );
+            final isEmpty = ref.watch(
+              cartProvider.select((state) => state.isEmpty),
+            );
+
             return Container(
               padding: const EdgeInsets.all(16),
               color: Theme.of(context).colorScheme.surfaceContainerHighest,
@@ -37,16 +37,16 @@ class CartScreen extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    cartProvider.isEmpty
+                    isEmpty
                         ? 'Giỏ hàng trống'
-                        : '${cartProvider.itemCount} loại sản phẩm (${cartProvider.totalQuantity} items)',
+                        : '$itemCount loại sản phẩm ($totalQuantity items)',
                     style: const TextStyle(fontWeight: FontWeight.w500),
                   ),
                   const Spacer(),
-                  if (!cartProvider.isEmpty)
+                  if (!isEmpty)
                     TextButton.icon(
                       onPressed: () {
-                        _showClearCartDialog(context);
+                        _showClearCartDialog(context, ref);
                       },
                       icon: const Icon(Icons.delete_sweep, size: 18),
                       label: const Text('Xóa tất cả'),
@@ -60,13 +60,29 @@ class CartScreen extends StatelessWidget {
 
         // Danh sách sản phẩm trong giỏ
         Expanded(
-          // Sử dụng context.watch() để lắng nghe thay đổi
-          child: context.watch<CartProvider>().isEmpty
-              ? _buildEmptyCart()
-              : _buildCartList(context),
+          // Sử dụng Consumer để lắng nghe list items
+          child: Consumer(
+            builder: (context, ref, child) {
+              final items = ref.watch(
+                cartProvider.select((state) => state.items),
+              );
+
+              if (items.isEmpty) {
+                return _buildEmptyCart();
+              }
+
+              return ListView.builder(
+                padding: const EdgeInsets.only(top: 8, bottom: 8),
+                itemCount: items.length,
+                itemBuilder: (context, index) {
+                  return CartItemWidget(cartItem: items[index]);
+                },
+              );
+            },
+          ),
         ),
 
-        // Footer hiển thị tổng tiền (sử dụng SELECTOR)
+        // Footer hiển thị tổng tiền
         const CartTotalWidget(),
       ],
     );
@@ -98,21 +114,8 @@ class CartScreen extends StatelessWidget {
     );
   }
 
-  // Widget hiển thị danh sách sản phẩm
-  Widget _buildCartList(BuildContext context) {
-    final items = context.watch<CartProvider>().items;
-
-    return ListView.builder(
-      padding: const EdgeInsets.only(top: 8, bottom: 8),
-      itemCount: items.length,
-      itemBuilder: (context, index) {
-        return CartItemWidget(cartItem: items[index]);
-      },
-    );
-  }
-
   // Dialog xác nhận xóa tất cả
-  void _showClearCartDialog(BuildContext context) {
+  void _showClearCartDialog(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -127,8 +130,8 @@ class CartScreen extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () {
-              // Provider.of với listen: false - Chỉ gọi method, không rebuild
-              Provider.of<CartProvider>(context, listen: false).clearCart();
+              // Gọi method clearCart
+              ref.read(cartProvider.notifier).clearCart();
               Navigator.pop(context);
             },
             style: ElevatedButton.styleFrom(
@@ -136,6 +139,24 @@ class CartScreen extends StatelessWidget {
               foregroundColor: Colors.white,
             ),
             child: const Text('Xóa tất cả'),
+          ),
+          // DEMO Service Button
+          TextButton(
+            onPressed: () {
+              // Demo usage of CartService
+              // This shows how to access provider logic via a service
+              final service = ref.read(cartServiceProvider);
+              service.printCartTotal();
+              service.clearCartFromService();
+              Navigator.pop(context);
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Called CartService! Check console.'),
+                ),
+              );
+            },
+            child: const Text('Test Service (Logs)'),
           ),
         ],
       ),

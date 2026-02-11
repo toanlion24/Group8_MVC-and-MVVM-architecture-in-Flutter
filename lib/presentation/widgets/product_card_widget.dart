@@ -1,26 +1,27 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/mixins/price_formatter_mixin.dart';
 import '../../data/models/product_model.dart';
-import '../providers/cart_provider.dart';
+import '../providers/cart_notifier.dart';
 
 // ProductCardWidget - Card hiển thị sản phẩm
 //
-// Sử dụng:
-// - context.read() để gọi method (không cần rebuild)
-// - context.watch() để đọc state và rebuild khi thay đổi
-// - PriceFormatterMixin để format giá tiền
-class ProductCardWidget extends StatelessWidget with PriceFormatterMixin {
+// Sử dụng ConsumerWidget để tương tác với Riverpod
+class ProductCardWidget extends ConsumerWidget with PriceFormatterMixin {
   final ProductModel product;
 
   const ProductCardWidget({super.key, required this.product});
 
   @override
-  Widget build(BuildContext context) {
-    // context.watch: Lắng nghe thay đổi để cập nhật UI (nút đã thêm/chưa)
-    final cartProvider = context.watch<CartProvider>();
-    final isInCart = cartProvider.isInCart(product.id);
-    final quantityInCart = cartProvider.getQuantity(product.id);
+  Widget build(BuildContext context, WidgetRef ref) {
+    // ref.watch: Lắng nghe thay đổi để cập nhật UI (nút đã thêm/chưa)
+    // Tối ưu: Chỉ rebuild khi trạng thái "có trong giỏ" hoặc "số lượng" thay đổi
+    final isInCart = ref.watch(
+      cartProvider.select((state) => state.isInCart(product.id)),
+    );
+    final quantityInCart = ref.watch(
+      cartProvider.select((state) => state.getQuantity(product.id)),
+    );
 
     return Card(
       elevation: 2,
@@ -30,7 +31,7 @@ class ProductCardWidget extends StatelessWidget with PriceFormatterMixin {
         children: [
           // Hình ảnh sản phẩm
           AspectRatio(
-            aspectRatio: 1.2,
+            aspectRatio: 1.25,
             child: Container(
               color: Colors.grey.shade200,
               child: Stack(
@@ -121,11 +122,8 @@ class ProductCardWidget extends StatelessWidget with PriceFormatterMixin {
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     onPressed: () {
-                      // Provider.of với listen: false - Chỉ gọi method, không lắng nghe thay đổi
-                      Provider.of<CartProvider>(
-                        context,
-                        listen: false,
-                      ).addToCart(product);
+                      // ref.read: Chỉ gọi method, không lắng nghe thay đổi
+                      ref.read(cartProvider.notifier).addToCart(product);
                     },
                     icon: Icon(isInCart ? Icons.add : Icons.add_shopping_cart),
                     label: Text(isInCart ? 'Thêm nữa' : 'Thêm'),

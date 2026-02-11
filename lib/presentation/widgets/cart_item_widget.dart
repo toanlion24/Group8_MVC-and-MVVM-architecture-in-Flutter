@@ -1,21 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/mixins/price_formatter_mixin.dart';
 import '../../domain/entities/cart_item.dart';
-import '../providers/cart_provider.dart';
+import '../providers/cart_notifier.dart';
 
 // CartItemWidget - Widget hiển thị một item trong giỏ hàng
-// Sử dụng PriceFormatterMixin để format giá tiền
-class CartItemWidget extends StatelessWidget with PriceFormatterMixin {
+// Sử dụng ConsumerWidget để tương tác với Riverpod
+class CartItemWidget extends ConsumerWidget with PriceFormatterMixin {
   final CartItem cartItem;
 
   const CartItemWidget({super.key, required this.cartItem});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     // Kiểm tra sản phẩm có đang được chọn không
-    final isSelected = context.watch<CartProvider>().isProductSelected(
-      cartItem.product.id,
+    // Sử dụng ref.watch với select để chỉ rebuild khi trạng thái select của item này thay đổi
+    final isSelected = ref.watch(
+      cartProvider.select(
+        (state) => state.isProductSelected(cartItem.product.id),
+      ),
     );
 
     return Card(
@@ -23,12 +26,11 @@ class CartItemWidget extends StatelessWidget with PriceFormatterMixin {
       // Highlight khi được chọn
       color: isSelected ? Colors.blue.shade50 : null,
       child: InkWell(
-        // Tap để chọn/bỏ chọn (DEMO: Consumer rebuild, Selector không rebuild)
+        // Tap để chọn/bỏ chọn
         onTap: () {
-          Provider.of<CartProvider>(
-            context,
-            listen: false,
-          ).toggleSelectProduct(cartItem.product.id);
+          ref
+              .read(cartProvider.notifier)
+              .toggleSelectProduct(cartItem.product.id);
         },
         child: Padding(
           padding: const EdgeInsets.all(12),
@@ -38,10 +40,9 @@ class CartItemWidget extends StatelessWidget with PriceFormatterMixin {
               Checkbox(
                 value: isSelected,
                 onChanged: (_) {
-                  Provider.of<CartProvider>(
-                    context,
-                    listen: false,
-                  ).toggleSelectProduct(cartItem.product.id);
+                  ref
+                      .read(cartProvider.notifier)
+                      .toggleSelectProduct(cartItem.product.id);
                 },
               ),
 
@@ -111,10 +112,9 @@ class CartItemWidget extends StatelessWidget with PriceFormatterMixin {
                   // Nút xóa
                   IconButton(
                     onPressed: () {
-                      Provider.of<CartProvider>(
-                        context,
-                        listen: false,
-                      ).removeFromCart(cartItem.product.id);
+                      ref
+                          .read(cartProvider.notifier)
+                          .removeFromCart(cartItem.product.id);
                     },
                     icon: const Icon(Icons.delete_outline),
                     color: Colors.red,
@@ -133,10 +133,9 @@ class CartItemWidget extends StatelessWidget with PriceFormatterMixin {
                         // Nút giảm
                         IconButton(
                           onPressed: () {
-                            Provider.of<CartProvider>(
-                              context,
-                              listen: false,
-                            ).decrementQuantity(cartItem.product.id);
+                            ref
+                                .read(cartProvider.notifier)
+                                .decrementQuantity(cartItem.product.id);
                           },
                           icon: const Icon(Icons.remove),
                           iconSize: 18,
@@ -159,10 +158,9 @@ class CartItemWidget extends StatelessWidget with PriceFormatterMixin {
                         // Nút tăng
                         IconButton(
                           onPressed: () {
-                            Provider.of<CartProvider>(
-                              context,
-                              listen: false,
-                            ).incrementQuantity(cartItem.product.id);
+                            ref
+                                .read(cartProvider.notifier)
+                                .incrementQuantity(cartItem.product.id);
                           },
                           icon: const Icon(Icons.add),
                           iconSize: 18,
