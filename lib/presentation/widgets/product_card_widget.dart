@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/mixins/price_formatter_mixin.dart';
 import '../../data/models/product_model.dart';
+import '../../features/product_detail/views/product_detail_view.dart';
 import '../providers/cart_notifier.dart';
 
 // ProductCardWidget - Card hiển thị sản phẩm
-//
-// Sử dụng ConsumerWidget để tương tác với Riverpod
 class ProductCardWidget extends ConsumerWidget with PriceFormatterMixin {
   final ProductModel product;
 
@@ -14,131 +13,150 @@ class ProductCardWidget extends ConsumerWidget with PriceFormatterMixin {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // ref.watch: Lắng nghe thay đổi để cập nhật UI (nút đã thêm/chưa)
-    // Tối ưu: Chỉ rebuild khi trạng thái "có trong giỏ" hoặc "số lượng" thay đổi
     final isInCart = ref.watch(
       cartProvider.select((state) => state.isInCart(product.id)),
     );
     final quantityInCart = ref.watch(
       cartProvider.select((state) => state.getQuantity(product.id)),
     );
+    final theme = Theme.of(context);
 
     return Card(
       elevation: 2,
+      shadowColor: Colors.black.withOpacity(0.08),
       clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Hình ảnh sản phẩm
-          AspectRatio(
-            aspectRatio: 1.25,
-            child: Container(
-              color: Colors.grey.shade200,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  // Hiển thị ảnh sản phẩm từ assets
-                  ClipRRect(
-                    child: Image.asset(
-                      product.imageUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Icon(
-                          Icons.image,
+      child: InkWell(
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => ProductDetailView(productId: product.id),
+            ),
+          );
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 4,
+              child: Container(
+                color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Hero(
+                      tag: 'product_${product.id}',
+                      child: Image.asset(
+                        product.imageUrl,
+                        fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Center(
+                        child: Icon(
+                          Icons.image_not_supported_outlined,
                           size: 48,
-                          color: Colors.grey,
-                        );
-                      },
+                          color: theme.colorScheme.outline,
+                        ),
+                      ),
+                      ),
                     ),
-                  ),
-
-                  // Badge số lượng trong giỏ
-                  if (isInCart)
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
+                    if (isInCart)
+                      Positioned(
+                        top: 10,
+                        right: 10,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primary,
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.2),
+                                blurRadius: 4,
+                              ),
+                            ],
+                          ),
+                          child: Text(
+                            'x$quantityInCart',
+                            style: TextStyle(
+                              color: theme.colorScheme.onPrimary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
                         ),
-                        decoration: BoxDecoration(
-                          color: Colors.green,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          'x$quantityInCart',
-                          style: const TextStyle(
-                            color: Colors.white,
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 5,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            product.name,
+                          style: theme.textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.bold,
-                            fontSize: 12,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          product.category,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          formatPrice(product.price),
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        onPressed: () {
+                          ref.read(cartProvider.notifier).addToCart(product);
+                        },
+                        icon: Icon(
+                          isInCart ? Icons.add : Icons.add_shopping_cart_rounded,
+                          size: 18,
+                        ),
+                        label: Text(isInCart ? 'Thêm nữa' : 'Thêm vào giỏ'),
+                        style: FilledButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
                           ),
                         ),
                       ),
                     ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-
-          // Thông tin sản phẩm
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Tên sản phẩm
-                Text(
-                  product.name,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-
-                // Danh mục
-                Text(
-                  product.category,
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                ),
-                const SizedBox(height: 8),
-
-                // Giá tiền (sử dụng PriceFormatterMixin)
-                Text(
-                  formatPrice(product.price),
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                // Nút thêm vào giỏ
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      // ref.read: Chỉ gọi method, không lắng nghe thay đổi
-                      ref.read(cartProvider.notifier).addToCart(product);
-                    },
-                    icon: Icon(isInCart ? Icons.add : Icons.add_shopping_cart),
-                    label: Text(isInCart ? 'Thêm nữa' : 'Thêm'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: isInCart
-                          ? Colors.green
-                          : Theme.of(context).colorScheme.primary,
-                      foregroundColor: Colors.white,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

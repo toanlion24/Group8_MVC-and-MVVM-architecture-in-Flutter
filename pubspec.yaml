@@ -42,6 +42,9 @@ dependencies:
   # SharedPreferences - Lưu trữ dữ liệu đơn giản
   shared_preferences: ^2.2.2
 
+  # BLoC & Cubit - Quản lý state
+  flutter_bloc: ^8.1.6
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

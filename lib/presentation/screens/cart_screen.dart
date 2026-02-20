@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/services/cart_service.dart';
 import '../providers/cart_notifier.dart';
@@ -6,14 +7,13 @@ import '../widgets/cart_item_widget.dart';
 import '../widgets/cart_total_widget.dart';
 
 // CartScreen - Màn hình giỏ hàng
-class CartScreen extends StatelessWidget {
+class CartScreen extends ConsumerWidget {
   const CartScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Column(
       children: [
-        // Header hiển thị số loại sản phẩm (Sử dụng Consumer)
         Consumer(
           builder: (context, ref, child) {
             final itemCount = ref.watch(
@@ -26,137 +26,166 @@ class CartScreen extends StatelessWidget {
               cartProvider.select((state) => state.isEmpty),
             );
 
+            if (isEmpty) {
+              return const SizedBox.shrink();
+            }
+
             return Container(
-              padding: const EdgeInsets.all(16),
-              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+              margin: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(16),
+              ),
               child: Row(
                 children: [
                   Icon(
-                    Icons.shopping_bag,
+                    Icons.shopping_bag_outlined,
                     color: Theme.of(context).colorScheme.primary,
+                    size: 24,
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    isEmpty
-                        ? 'Giỏ hàng trống'
-                        : '$itemCount loại sản phẩm ($totalQuantity items)',
-                    style: const TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                  const Spacer(),
-                  if (!isEmpty)
-                    TextButton.icon(
-                      onPressed: () {
-                        _showClearCartDialog(context, ref);
-                      },
-                      icon: const Icon(Icons.delete_sweep, size: 18),
-                      label: const Text('Xóa tất cả'),
-                      style: TextButton.styleFrom(foregroundColor: Colors.red),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      '$itemCount loại • $totalQuantity sản phẩm',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
                     ),
+                  ),
+                  TextButton.icon(
+                    onPressed: () => _showClearCartDialog(context, ref),
+                    icon: Icon(
+                      Icons.delete_outline,
+                      size: 18,
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                    label: Text(
+                      'Xóa tất cả',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
                 ],
               ),
             );
           },
         ),
-
-        // Danh sách sản phẩm trong giỏ
         Expanded(
-          // Sử dụng Consumer để lắng nghe list items
           child: Consumer(
             builder: (context, ref, child) {
               final items = ref.watch(
                 cartProvider.select((state) => state.items),
               );
-
               if (items.isEmpty) {
-                return _buildEmptyCart();
+                return _buildEmptyCart(context);
               }
-
-              return ListView.builder(
-                padding: const EdgeInsets.only(top: 8, bottom: 8),
+              final listContent = ListView.builder(
+                padding: const EdgeInsets.fromLTRB(24, 8, 24, 120),
                 itemCount: items.length,
                 itemBuilder: (context, index) {
                   return CartItemWidget(cartItem: items[index]);
                 },
               );
+              if (kIsWeb && MediaQuery.of(context).size.width > 800) {
+                return Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 700),
+                    child: listContent,
+                  ),
+                );
+              }
+              return listContent;
             },
           ),
         ),
-
-        // Footer hiển thị tổng tiền
         const CartTotalWidget(),
       ],
     );
   }
 
-  // Widget hiển thị khi giỏ hàng trống
-  Widget _buildEmptyCart() {
+  Widget _buildEmptyCart(BuildContext context) {
+    final theme = Theme.of(context);
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.shopping_cart_outlined,
-            size: 100,
-            color: Colors.grey.shade400,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Giỏ hàng của bạn đang trống',
-            style: TextStyle(fontSize: 18, color: Colors.grey.shade600),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Hãy thêm sản phẩm vào giỏ hàng',
-            style: TextStyle(color: Colors.grey.shade500),
-          ),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.all(48),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHighest,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.shopping_cart_outlined,
+                size: 80,
+                color: theme.colorScheme.outline,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Giỏ hàng trống',
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Thêm sản phẩm để bắt đầu mua sắm',
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  // Dialog xác nhận xóa tất cả
   void _showClearCartDialog(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Xóa giỏ hàng'),
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: const Text('Xóa giỏ hàng?'),
         content: const Text(
           'Bạn có chắc muốn xóa tất cả sản phẩm trong giỏ hàng?',
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(ctx),
             child: const Text('Hủy'),
           ),
-          ElevatedButton(
+          FilledButton(
             onPressed: () {
-              // Gọi method clearCart
               ref.read(cartProvider.notifier).clearCart();
-              Navigator.pop(context);
+              Navigator.pop(ctx);
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
             ),
             child: const Text('Xóa tất cả'),
           ),
-          // DEMO Service Button
           TextButton(
             onPressed: () {
-              // Demo usage of CartService
-              // This shows how to access provider logic via a service
               final service = ref.read(cartServiceProvider);
               service.printCartTotal();
               service.clearCartFromService();
-              Navigator.pop(context);
-
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Called CartService! Check console.'),
-                ),
-              );
+              Navigator.pop(ctx);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Test CartService')),
+                );
+              }
             },
-            child: const Text('Test Service (Logs)'),
+            child: const Text('Test Service'),
           ),
         ],
       ),

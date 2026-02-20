@@ -6,6 +6,7 @@ class ProductModel {
   final String id;
   final String name;
   final String description;
+  final String? fullDescription; // Mô tả chi tiết khi click vào sản phẩm
   final double price;
   final String imageUrl;
   final String category;
@@ -14,6 +15,7 @@ class ProductModel {
     required this.id,
     required this.name,
     required this.description,
+    this.fullDescription,
     required this.price,
     required this.imageUrl,
     required this.category,
@@ -25,6 +27,7 @@ class ProductModel {
       id: json['id'] as String,
       name: json['name'] as String,
       description: json['description'] as String,
+      fullDescription: json['fullDescription'] as String?,
       price: (json['price'] as num).toDouble(),
       imageUrl: json['imageUrl'] as String,
       category: json['category'] as String,
@@ -37,6 +40,7 @@ class ProductModel {
       'id': id,
       'name': name,
       'description': description,
+      'fullDescription': fullDescription,
       'price': price,
       'imageUrl': imageUrl,
       'category': category,

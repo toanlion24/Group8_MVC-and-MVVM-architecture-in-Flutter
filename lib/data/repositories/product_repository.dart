@@ -10,4 +10,14 @@ class ProductRepository {
   List<ProductModel> getAllProducts() {
     return FakeProductDataSource.getProducts();
   }
+
+  // Lấy chi tiết sản phẩm theo ID
+  ProductModel? getProductById(String id) {
+    final products = FakeProductDataSource.getProducts();
+    try {
+      return products.firstWhere((p) => p.id == id);
+    } catch (_) {
+      return null;
+    }
+  }
 }

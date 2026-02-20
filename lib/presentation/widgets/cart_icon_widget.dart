@@ -28,38 +28,46 @@ class CartIconWidget extends StatelessWidget {
           cartProvider.select((state) => state.totalQuantity),
         );
 
-        debugPrint('CartIconWidget REBUILD - totalQuantity: $totalQuantity');
-
         return GestureDetector(
           onTap: onTap,
           child: Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: totalQuantity > 0
+                  ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.6)
+                  : null,
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: Stack(
               clipBehavior: Clip.none,
               children: [
-                // Icon giỏ hàng
-                const Icon(Icons.shopping_cart_outlined, size: 28),
-
-                // Badge hiển thị số lượng
+                Icon(
+                  Icons.shopping_cart_outlined,
+                  size: 24,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
                 if (totalQuantity > 0)
                   Positioned(
-                    right: -8,
-                    top: -8,
+                    right: -4,
+                    top: -4,
                     child: Container(
-                      padding: const EdgeInsets.all(4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       constraints: const BoxConstraints(
-                        minWidth: 20,
-                        minHeight: 20,
+                        minWidth: 18,
+                        minHeight: 18,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.red,
+                        color: Theme.of(context).colorScheme.error,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
                         totalQuantity > 99 ? '99+' : '$totalQuantity',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 11,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onError,
+                          fontSize: 10,
                           fontWeight: FontWeight.bold,
                         ),
                         textAlign: TextAlign.center,
