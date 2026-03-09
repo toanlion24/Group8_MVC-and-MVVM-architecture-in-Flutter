@@ -1,3 +1,34 @@
+// =============================================================================
+// PHỎNG VẤN KIẾN THỨC - auth_screen.dart (Màn hình đăng nhập/đăng ký)
+// =============================================================================
+//
+//   Q1. AuthScreen là StatefulWidget — state nội bộ (_isLogin) dùng để làm gì? Có conflict với FormCubit/LoginBloc không?
+//   A1. _isLogin chỉ đổi tab "Đăng nhập" / "Đăng ký" và nhãn nút (không gửi lên server).
+//       FormCubit giữ giá trị form + validate; LoginBloc giữ luồng login/register. Không conflict:
+//       local UI state (tab) tách với form state và auth state.
+//
+//   Q2. BlocConsumer<LoginBloc, LoginState>: listener vs builder dùng thế nào trong màn này?
+//   A2. listener: khi state is LoginSuccess → pushReplacement(HomeScreen) (side effect, không build widget).
+//       builder: nhận loginState để hiện UI — ví dụ state is LoginLoading thì hiện loading, state is
+//       LoginFailure thì hiện error card; form và nút lấy từ BlocBuilder<FormCubit, AuthFormState>.
+//
+//   Q3. Khi bấm "Đăng nhập", email/password lấy từ đâu? FormCubit và LoginBloc kết hợp thế nào?
+//   A3. BlocBuilder<FormCubit, AuthFormState> cho formState; khi bấm nút dùng formState.email,
+//       formState.password. context.read<LoginBloc>().add(LoginRequested(formState.email, formState.password))
+//       (hoặc RegisterRequested nếu _isLogin == false). FormCubit = nguồn dữ liệu form, LoginBloc = thực thi đăng nhập.
+//
+//   Q4. pushReplacement(HomeScreen()) khác push() thế nào? Sau khi replace, AuthScreen còn trong stack không?
+//   A4. push: thêm HomeScreen lên stack, Back quay lại AuthScreen. pushReplacement: thay AuthScreen
+//       bằng HomeScreen, stack chỉ còn HomeScreen, Back sẽ thoát app. Sau replace, AuthScreen không còn trong stack.
+//
+// -----------------------------------------------------------------------------
+// LOGIC TRONG FILE: StatefulWidget (_isLogin). BlocConsumer LoginBloc (listener: Success→replace;
+//   builder: form + nút). BlocBuilder FormCubit cho TextField và isValid. Nút gửi add(LoginRequested|RegisterRequested).
+// -----------------------------------------------------------------------------
+// LOGIC TRONG DỰ ÁN: Là home của MaterialApp. Cung cấp FormCubit/LoginBloc từ app.dart;
+//   đăng nhập thành công → chuyển sang HomeScreen (danh sách sản phẩm + giỏ hàng).
+// -----------------------------------------------------------------------------
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../screens/home_screen.dart';

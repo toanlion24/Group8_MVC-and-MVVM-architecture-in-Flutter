@@ -1,10 +1,36 @@
+// =============================================================================
+// PHỎNG VẤN KIẾN THỨC - home_screen.dart (Shell sau đăng nhập)
+// =============================================================================
+//
+//   Q1. _currentIndex và _screens — tại sao không dùng Navigator + routes?
+//   A1. Hai tab (Sản phẩm, Giỏ hàng) cùng cấp, không stack — dùng index + list widget đơn giản
+//       hơn Navigator. Navigator phù hợp khi có stack (chi tiết, form). Ở đây chỉ đổi body và
+//       nav highlight.
+//
+//   Q2. isWide (width >= 768 hoặc web >= 600) điều khiển gì? Bottom nav vs sidebar?
+//   A2. isWide: true thì hiện sidebar trái (240px) + ẩn bottom nav; false thì ẩn sidebar +
+//       hiện BottomNavigationBar. Responsive: mobile bottom nav, tablet/web sidebar.
+//
+//   Q3. ProductListScreen và CartScreen được tạo const trong list — có bị build lại khi đổi tab không?
+//   A3. _screens build một lần (const). Khi _currentIndex đổi chỉ _screens[_currentIndex] được
+//       hiển thị; cả hai màn vẫn nằm trong cây (Offstage hoặc không build phần kia tùy impl).
+//       Thực tế Row/Column chỉ render child đang hiển thị; list không rebuild toàn bộ.
+//
+// -----------------------------------------------------------------------------
+// LOGIC TRONG FILE: StatefulWidget, _currentIndex, _screens = [ProductListScreen, CartScreen].
+//   build: Row(sidebar nếu isWide, Expanded(Column(AppBar + body, CartIconWidget))), bottomNav nếu !isWide.
+// -----------------------------------------------------------------------------
+// LOGIC TRONG DỰ ÁN: Được pushReplacement từ AuthScreen. Là shell chính: tab Sản phẩm (list)
+//   và tab Giỏ hàng; CartIconWidget trên AppBar chuyển sang tab Giỏ hàng khi tap.
+// -----------------------------------------------------------------------------
+
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import '../widgets/cart_icon_widget.dart';
 import 'product_list_screen.dart';
 import 'cart_screen.dart';
 
-// HomeScreen - Màn hình chính của ứng dụng
+/// HomeScreen - Màn hình chính sau đăng nhập (2 tab: Sản phẩm, Giỏ hàng)
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 

@@ -1,9 +1,33 @@
+// =============================================================================
+// PHỎNG VẤN KIẾN THỨC - cart_total_widget.dart (Footer tổng tiền + thanh toán)
+// =============================================================================
+//
+//   Q1. onPressed: totalPrice > 0 ? () { SnackBar + clearCart } : null — thanh toán thật không?
+//   A1. Không: chỉ demo. SnackBar "Đặt hàng thành công!" rồi clearCart. Production sẽ gọi
+//       API đặt hàng, nhận success rồi mới clear hoặc chuyển màn xác nhận.
+//
+//   Q2. ref.read(cartProvider.notifier).clearCart() — sau clear widget có tự cập nhật không?
+//   A2. Có. clearCart() trong notifier set state mới (items: []); cartProvider notify listener.
+//       CartTotalWidget ref.watch(cartProvider.select((state) => state.totalPrice)) nên
+//       rebuild, totalPrice = 0, nút disabled. List và header cũng rebuild vì watch items.
+//
+//   Q3. SafeArea(top: false) — vì sao chỉ bảo vệ bottom?
+//   A3. Footer nằm dưới cùng; trên có thể là AppBar/safe. SafeArea(top: false) tránh padding
+//       phía trên (không cần), chỉ cần padding bottom cho notch/home indicator.
+//
+// -----------------------------------------------------------------------------
+// LOGIC TRONG FILE: ConsumerWidget + PriceFormatterMixin. Watch totalPrice. Hiển thị
+//   "Tổng tiền" + formatPrice; nút Thanh toán (SnackBar + clearCart khi totalPrice > 0).
+// -----------------------------------------------------------------------------
+// LOGIC TRONG DỰ ÁN: Nằm dưới cùng CartScreen (Column). Cố định, list có padding bottom.
+// -----------------------------------------------------------------------------
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/mixins/price_formatter_mixin.dart';
 import '../providers/cart_notifier.dart';
 
-// CartTotalWidget - Footer hiển thị tổng tiền và nút thanh toán
+/// CartTotalWidget - Footer tổng tiền và nút thanh toán
 class CartTotalWidget extends ConsumerWidget with PriceFormatterMixin {
   const CartTotalWidget({super.key});
 

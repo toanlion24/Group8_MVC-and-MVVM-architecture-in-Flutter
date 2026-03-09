@@ -1,3 +1,28 @@
+// =============================================================================
+// PHỎNG VẤN KIẾN THỨC - product_detail_view.dart (Màn chi tiết sản phẩm)
+// =============================================================================
+//
+//   Q1. asyncProduct.when(loading, data, error) — khi nào data nhận null?
+//   A1. Khi FutureProvider trả về null: productId không có trong datasource hoặc productId.isEmpty.
+//       View kiểm tra data: (product) => product == null ? _buildNotFound(context) : _buildContent(...).
+//
+//   Q2. ref.watch(cartProvider.select(...)) isInCart, quantity — màn chi tiết cũng cần đồng bộ với giỏ?
+//   A2. Có. Nút "Thêm vào giỏ" và text "Đã có x trong giỏ" cần isInCart và quantity từ cartProvider.
+//       Watch để khi user thêm từ màn khác hoặc từ chính màn này, UI cập nhật (số lượng, nhãn nút).
+//
+//   Q3. Hero tag 'product_${product.id}' trùng với ProductCardWidget — transition hoạt động thế nào?
+//   A3. Cùng tag trên hai màn: ProductCardWidget (danh sách) và ProductDetailView (chi tiết). Khi
+//       push màn chi tiết, Flutter tìm Hero cùng tag ở destination và animate ảnh từ vị trí card
+//       sang vị trí app bar. Pop lại cũng có transition ngược.
+//
+// -----------------------------------------------------------------------------
+// LOGIC TRONG FILE: ConsumerWidget + PriceFormatterMixin. watch productDetailViewModelProvider(productId),
+//   when(loading/data/error). data: null → notFound; else SliverAppBar + Hero + nội dung + nút Thêm vào giỏ.
+// -----------------------------------------------------------------------------
+// LOGIC TRONG DỰ ÁN: Mở từ ProductCardWidget (tap card). Hiển thị chi tiết từ Repository qua
+//   Service/ViewModel; có thể thêm vào giỏ từ màn này.
+// -----------------------------------------------------------------------------
+
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';

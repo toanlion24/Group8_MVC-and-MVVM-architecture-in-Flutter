@@ -1,17 +1,32 @@
+// =============================================================================
+// PHỎNG VẤN KIẾN THỨC - cart_icon_widget.dart (Icon giỏ hàng + badge)
+// =============================================================================
+//
+//   Q1. Consumer vs ConsumerWidget — CartIconWidget dùng Consumer bên trong build. Có thể đổi thành ConsumerWidget không?
+//   A1. Có: class CartIconWidget extends ConsumerWidget, build(context, ref) { ... ref.watch(...) }.
+//       Consumer dùng khi widget cha không có ref (ví dụ StatelessWidget bọc Consumer). Cả hai
+//       đều rebuild khi provider thay đổi; ConsumerWidget gọn hơn khi cả widget đều cần ref.
+//
+//   Q2. ref.watch(cartProvider.select((state) => state.totalQuantity)) — chỉ totalQuantity thay đổi mới rebuild đúng không?
+//   A2. Đúng. select so sánh (state) => state.totalQuantity; chỉ khi totalQuantity đổi thì
+//       selector mới coi là thay đổi và rebuild. Các thay đổi khác (ví dụ selectedProductIds)
+//       không làm widget này rebuild.
+//
+//   Q3. onTap chuyển sang tab Giỏ hàng — ai truyền callback, HomeScreen xử lý thế nào?
+//   A3. HomeScreen truyền onTap: () => setState(() => _currentIndex = 1). CartIconWidget nhận
+//       VoidCallback? onTap; khi tap gọi onTap?.call() → đổi tab sang CartScreen.
+//
+// -----------------------------------------------------------------------------
+// LOGIC TRONG FILE: StatelessWidget, Consumer watch totalQuantity. Icon + badge (99+ nếu > 99).
+// -----------------------------------------------------------------------------
+// LOGIC TRONG DỰ ÁN: Nằm trên AppBar của HomeScreen; tap chuyển sang tab Giỏ hàng.
+// -----------------------------------------------------------------------------
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/cart_notifier.dart';
 
-// CartIconWidget - Sử dụng CONSUMER để hiển thị số lượng
-//
-// CONSUMER:
-// - Lắng nghe MỌI thay đổi từ CartProvider
-// - Rebuild TOÀN BỘ widget bên trong builder mỗi khi notifyListeners() được gọi
-// - Phù hợp khi widget cần nhiều thông tin từ Provider
-//
-// Trong ví dụ này:
-// - Consumer rebuild mỗi khi giỏ hàng thay đổi (thêm/xóa/cập nhật)
-// - Hiển thị badge với tổng số lượng sản phẩm
+/// CartIconWidget - Icon giỏ hàng + badge tổng số lượng
 class CartIconWidget extends StatelessWidget {
   final VoidCallback? onTap;
 

@@ -1,11 +1,33 @@
+// =============================================================================
+// PHỎNG VẤN KIẾN THỨC - fake_product_datasource.dart (Data source giả lập)
+// =============================================================================
+//
+//   Q1. Data source trong Clean Architecture nằm ở đâu? Repository gọi DataSource thế nào?
+//   A1. Data source thuộc data layer (datasources/). Repository (ProductRepository) gọi
+//       FakeProductDataSource.getProducts() và getProductById; không gọi từ presentation.
+//       UI chỉ gọi Repository hoặc Service/ViewModel.
+//
+//   Q2. getProducts() là static — có thể đổi thành instance method + inject không?
+//   A2. Có: class FakeProductDataSource { List<ProductModel> getProducts() => [...]; }
+//       rồi Provider/Repository tạo instance. Static đơn giản khi không cần state/config;
+//       instance dễ test và thay bằng RemoteProductDataSource(inject http client).
+//
+//   Q3. Khi đổi sang API thật, cần sửa những file nào?
+//   A3. Tạo RemoteProductDataSource (API call), ProductRepository nhận DataSource (interface)
+//       và gọi getProducts/getProductById từ đó. Có thể giữ Fake cho dev, đổi inject ở
+//       môi trường. ProductListScreen và ProductDetailService vẫn dùng Repository, không đổi.
+//
+// -----------------------------------------------------------------------------
+// LOGIC TRONG FILE: FakeProductDataSource.getProducts() trả về list ProductModel cố định (8 SP).
+// -----------------------------------------------------------------------------
+// LOGIC TRONG DỰ ÁN: ProductRepository.getAllProducts/getProductById gọi từ đây.
+//   ProductListScreen và ProductDetailService dùng Repository, không trực tiếp DataSource.
+// -----------------------------------------------------------------------------
+
 import '../models/product_model.dart';
 
-// FakeProductDataSource - Nguồn dữ liệu giả lập
-//
-// Trong thực tế, đây sẽ là API call hoặc đọc từ database
-// Sử dụng fake data để demo mà không cần backend
+/// FakeProductDataSource - Nguồn dữ liệu giả lập (thay bằng API/DB sau)
 class FakeProductDataSource {
-  // Danh sách sản phẩm giả lập
   static List<ProductModel> getProducts() {
     return [
       const ProductModel(

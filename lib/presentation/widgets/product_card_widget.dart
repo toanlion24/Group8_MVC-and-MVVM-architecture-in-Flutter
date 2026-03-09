@@ -1,3 +1,28 @@
+// =============================================================================
+// PHỎNG VẤN KIẾN THỨC - product_card_widget.dart (Card một sản phẩm trong list)
+// =============================================================================
+//
+//   Q1. onTap mở ProductDetailView(productId) — truyền id thay vì ProductModel vì sao?
+//   A1. Truyền id: màn chi tiết tự load (FutureProvider.family(productId)), có loading/error.
+//       Nếu truyền ProductModel thì không cần load nhưng không có fullDescription từ "server"
+//       và không thống nhất với luồng async. Chi tiết cần id để ref.watch(productDetailViewModelProvider(productId)).
+//
+//   Q2. Hero(tag: 'product_${product.id}') — Hero dùng để làm gì khi chuyển màn?
+//   A2. Hero dùng cho transition: ảnh từ card "bay" sang ảnh trên màn chi tiết (cùng tag).
+//       Flutter tự animate vị trí/kích thước. Tag phải unique (product.id).
+//
+//   Q3. ref.read(cartProvider.notifier).addToCart(product) — read không watch, có rebuild khi giỏ đổi không?
+//   A3. addToCart chỉ gọi action, không subscribe. Widget đã ref.watch(cartProvider.select(...))
+//       isInCart và quantityInCart — khi notifier thay đổi state, những watch đó rebuild
+//       widget. read chỉ để gọi notifier.addToCart; rebuild do watch đảm nhiệm.
+//
+// -----------------------------------------------------------------------------
+// LOGIC TRONG FILE: ConsumerWidget + PriceFormatterMixin. Watch isInCart, quantityInCart.
+//   Card: ảnh Hero, tên, category, giá, nút Thêm vào giỏ. onTap → ProductDetailView(product.id).
+// -----------------------------------------------------------------------------
+// LOGIC TRONG DỰ ÁN: Dùng trong ProductListScreen SliverGrid. Mỗi card một ProductModel từ Repository.
+// -----------------------------------------------------------------------------
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/mixins/price_formatter_mixin.dart';
@@ -5,7 +30,7 @@ import '../../data/models/product_model.dart';
 import '../../features/product_detail/views/product_detail_view.dart';
 import '../providers/cart_notifier.dart';
 
-// ProductCardWidget - Card hiển thị sản phẩm
+/// ProductCardWidget - Card hiển thị một sản phẩm trong danh sách
 class ProductCardWidget extends ConsumerWidget with PriceFormatterMixin {
   final ProductModel product;
 

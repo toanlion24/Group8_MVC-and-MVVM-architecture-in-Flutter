@@ -1,8 +1,35 @@
+// =============================================================================
+// PHỎNG VẤN KIẾN THỨC - cart_service.dart (Service gọi Riverpod ngoài Widget)
+// =============================================================================
+//
+//   Q1. CartService nhận Ref ref — Ref là gì? Tại sao không truyền WidgetRef?
+//   A1. Ref (từ Riverpod) là interface để read/watch provider, có trong ProviderScope. WidgetRef
+//       chỉ có trong context widget (Consumer, ConsumerWidget). Service/class không có
+//       BuildContext nên nhận Ref do Provider cung cấp: cartServiceProvider nhận (ref) => CartService(ref).
+//
+//   Q2. ref.read(cartProvider) và ref.watch(cartProvider) khác nhau thế nào? Service dùng read vì sao?
+//   A2. read: lấy giá trị hiện tại, không subscribe — khi state đổi service không rebuild. watch:
+//       subscribe, state đổi thì listener rebuild. Service chỉ cần đọc hoặc gửi lệnh (clearCart)
+//       một lần, không cần rebuild → dùng read.
+//
+//   Q3. Trong dự án CartService được gọi ở đâu? Có bắt buộc phải có không?
+//   A3. CartScreen: trong dialog "Xóa tất cả" có nút "Test Service" gọi
+//       ref.read(cartServiceProvider).printCartTotal() và clearCartFromService(). Demo để
+//       minh họa gọi Riverpod từ layer không phải widget; không bắt buộc cho tính năng chính.
+//
+// -----------------------------------------------------------------------------
+// LOGIC TRONG FILE: CartService(ref): printCartTotal (read cart, in log), clearCartFromService
+//   (notifier.clearCart). cartServiceProvider = Provider<CartService>.
+// -----------------------------------------------------------------------------
+// LOGIC TRONG DỰ ÁN: Dùng trong CartScreen dialog; chứng tỏ có thể thao tác giỏ hàng
+//   từ service/lớp bên ngoài nếu có Ref.
+// -----------------------------------------------------------------------------
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../presentation/providers/cart_notifier.dart';
 
-// Demo Service: Gọi Provider từ bên ngoài Widget
+/// Demo Service: Gọi Provider từ bên ngoài Widget
 class CartService {
   final Ref ref;
 

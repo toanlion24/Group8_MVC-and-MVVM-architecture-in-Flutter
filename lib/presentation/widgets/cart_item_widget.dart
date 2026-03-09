@@ -1,10 +1,36 @@
+// =============================================================================
+// PHỎNG VẤN KIẾN THỨC - cart_item_widget.dart (Một dòng item trong giỏ)
+// =============================================================================
+//
+//   Q1. ref.read(cartProvider.notifier).toggleSelectProduct — Checkbox và InkWell onTap đều gọi. Có trùng không?
+//   A1. Không trùng: cùng một hành động (toggle chọn). Checkbox onChanged và InkWell onTap
+//       đều gọi toggleSelectProduct; UX: click cả dòng hoặc checkbox đều đổi trạng thái chọn.
+//
+//   Q2. increment/decrement gọi notifier; CartState có ValidationMixin — giới hạn 99 ở đâu?
+//   A2. Giới hạn ở CartNotifier: incrementQuantity gọi isValidQuantity(item.quantity + 1)
+//       (ValidationMixin), chỉ cập nhật nếu true. Widget chỉ gọi increment/decrement; logic
+//       nằm trong notifier.
+//
+//   Q3. CartItem nhận từ parent (items[index]) — khi quantity đổi, widget có nhận cartItem mới không?
+//   A3. Parent (CartScreen) watch cartProvider.select((state) => state.items). Khi items đổi
+//       (số lượng, xóa), ListView rebuild và CartItemWidget nhận cartItem mới (cùng product
+//       nhưng quantity có thể khác). Widget là stateless với input cartItem nên luôn hiển thị
+//       đúng theo prop.
+//
+// -----------------------------------------------------------------------------
+// LOGIC TRONG FILE: ConsumerWidget + PriceFormatterMixin. Watch isProductSelected.
+//   Card: Checkbox, ảnh, tên, đơn giá, tổng tiền, nút xóa, +/- quantity.
+// -----------------------------------------------------------------------------
+// LOGIC TRONG DỰ ÁN: CartScreen ListView.builder từ state.items; mỗi item một CartItemWidget.
+// -----------------------------------------------------------------------------
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/mixins/price_formatter_mixin.dart';
 import '../../domain/entities/cart_item.dart';
 import '../providers/cart_notifier.dart';
 
-// CartItemWidget - Widget hiển thị một item trong giỏ hàng
+/// CartItemWidget - Một dòng sản phẩm trong giỏ (checkbox, ảnh, giá, +/-)
 class CartItemWidget extends ConsumerWidget with PriceFormatterMixin {
   final CartItem cartItem;
 

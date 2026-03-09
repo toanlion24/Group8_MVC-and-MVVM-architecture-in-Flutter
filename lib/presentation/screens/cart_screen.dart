@@ -1,3 +1,29 @@
+// =============================================================================
+// PHỎNG VẤN KIẾN THỨC - cart_screen.dart (Màn hình giỏ hàng)
+// =============================================================================
+//
+//   Q1. ConsumerWidget và Consumer — khi nào dùng từng loại? CartScreen dùng cả ref trong method (_showClearCartDialog).
+//   A1. ConsumerWidget: widget có ref trong build. Khi cần ref trong callback (dialog, onPressed)
+//       vẫn dùng ref từ parameter build(context, ref). _showClearCartDialog(context, ref) nhận ref
+//       để đọc cartProvider.notifier và cartServiceProvider bên trong dialog.
+//
+//   Q2. ref.watch(cartProvider.select((state) => state.items)) — tại sao dùng nhiều Consumer với select khác nhau?
+//   A2. Một Consumer watch items (list), một watch itemCount/totalQuantity/isEmpty cho header.
+//       Tách để chỉ phần cần thay đổi mới rebuild: header chỉ rebuild khi count/empty đổi;
+//       list chỉ rebuild khi items đổi. Select giảm rebuild không cần thiết.
+//
+//   Q3. CartTotalWidget cố định ở dưới; list có padding bottom 120 — vì sao?
+//   A3. CartTotalWidget có chiều cao cố định (footer). ListView cần padding bottom để nội dung
+//       không bị footer che (cuộn đến item cuối vẫn thấy). 120px xấp xỉ chiều cao footer + SafeArea.
+//
+// -----------------------------------------------------------------------------
+// LOGIC TRONG FILE: ConsumerWidget. Column: header (số loại + tổng số, nút Xóa tất cả),
+//   Expanded(ListView CartItemWidget), CartTotalWidget. Dialog clear cart có nút Test Service.
+// -----------------------------------------------------------------------------
+// LOGIC TRONG DỰ ÁN: Tab thứ hai của HomeScreen. Hiển thị giỏ từ cartProvider; thao tác
+//   qua CartItemWidget và footer thanh toán / xóa tất cả.
+// -----------------------------------------------------------------------------
+
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,7 +32,7 @@ import '../providers/cart_notifier.dart';
 import '../widgets/cart_item_widget.dart';
 import '../widgets/cart_total_widget.dart';
 
-// CartScreen - Màn hình giỏ hàng
+/// CartScreen - Màn hình giỏ hàng
 class CartScreen extends ConsumerWidget {
   const CartScreen({super.key});
 
